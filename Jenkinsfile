@@ -2,20 +2,14 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "sonuarun004/projcert:latest"
+        IMAGE = "sonuarun004/projcert:latest"
     }
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t $IMAGE .'
             }
         }
 
@@ -23,32 +17,30 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
                 )]) {
                     sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push $DOCKER_IMAGE
+                      echo "$PASS" | docker login -u "$USER" --password-stdin
+                      docker push $IMAGE
                     '''
                 }
             }
         }
 
-        stage('Deploy to DEV (K8s)') {
+        stage('Deploy to DEV') {
             steps {
                 sh 'kubectl apply -f k8s/dev/'
             }
         }
 
-        stage('APPROVAL GATE') {
+        stage('Approval Gate') {
             steps {
-                input message: 'Approve deployment to PRODUCTION?',
-                      ok: 'Approve',
-                      submitter: 'admin,devops'
+                input message: 'Approve deployment to PROD?', ok: 'Approve'
             }
         }
 
-        stage('Deploy to PROD (K8s)') {
+        stage('Deploy to PROD') {
             steps {
                 sh 'kubectl apply -f k8s/prod/'
             }
