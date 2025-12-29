@@ -6,19 +6,20 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
                 sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
-        stage('Push to Docker  Hub') {
+        stage('Push Image') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
@@ -33,12 +34,23 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Deploy to DEV (K8s)') {
             steps {
-                sh '''
-                docker rm -f projcert || true
-                docker run -d -p 8090:80 --name projcert $DOCKER_IMAGE
-                '''
+                sh 'kubectl apply -f k8s/dev/'
+            }
+        }
+
+        stage('APPROVAL GATE') {
+            steps {
+                input message: 'Approve deployment to PRODUCTION?',
+                      ok: 'Approve',
+                      submitter: 'admin,devops'
+            }
+        }
+
+        stage('Deploy to PROD (K8s)') {
+            steps {
+                sh 'kubectl apply -f k8s/prod/'
             }
         }
     }
