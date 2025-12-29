@@ -18,7 +18,7 @@ pipeline {
             steps {
                 sh '''
                 docker rm -f projcert || true
-                docker run -d -p 8080:80 --name projcert projcert:latest
+                docker run -d -p 8090:80 --name projcert projcert:latest
                 '''
             }
         }
