@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "sonuaarun004/projcert:latest"
+        DOCKER_IMAGE = "sonuarun004/projcert:latest"
     }
 
     stages {
